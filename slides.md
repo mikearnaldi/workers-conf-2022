@@ -39,3 +39,7 @@ src: ./slides/06-productionizing-code-cancel-2.md
 ---
 src: ./slides/06-productionizing-code-cancel-3.md
 ---
+
+---
+src: ./slides/07-twoslash.md
+---
