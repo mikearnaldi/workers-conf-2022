@@ -6,7 +6,7 @@ layout: center
 
 Resilience on failures
 
-```ts
+```ts twoslash
 const withRetry =
   (n: number) =>
   async <T>(body: () => Promise<T>): Promise<T> => {
