@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: yarn
       - name: Build
-        run: yarn build
+        run: yarn build --base /workers-conf-2022/
       - name: Deploy pages
         uses: crazy-max/ghaction-github-pages@v2
         with:
