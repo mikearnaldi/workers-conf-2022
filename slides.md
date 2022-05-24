@@ -27,3 +27,15 @@ src: ./slides/06-productionizing-code-retry.md
 ---
 src: ./slides/07-productionizing-code-retry-remaining.md
 ---
+
+---
+src: ./slides/08-productionizing-code-cancel-1.md
+---
+
+---
+src: ./slides/08-productionizing-code-cancel-2.md
+---
+
+---
+src: ./slides/08-productionizing-code-cancel-3.md
+---

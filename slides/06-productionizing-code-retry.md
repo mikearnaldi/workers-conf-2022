@@ -7,22 +7,22 @@ layout: center
 Resilience on failures
 
 ```ts
-const withLimitedRetry =
+const withRetry =
   (n: number) =>
-  <T, ARGS extends unknown[]>(body: (...args: ARGS) => Promise<T>) =>
-  async (...args: ARGS): Promise<T> => {
+  async <T>(body: () => Promise<T>): Promise<T> => {
     try {
-      return await body(...args);
+      return await body();
     } catch (e) {
       if (n > 0) {
-        return await withLimitedRetry(n - 1)(body)(...args);
+        return await withRetry(n - 1)(body);
       }
       throw e;
     }
   };
 
-const getTodo = withLimitedRetry(10)(async (id: number) => {
-  const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);
-  return await res.json();
-});
+const getTodo = (id: number): Promise<unknown> =>
+  withRetry(10)(async () => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);
+    return await res.json();
+  });
 ```

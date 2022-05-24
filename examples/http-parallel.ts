@@ -1,27 +1,34 @@
-const withRetry = (n: number) =>
-  <T, ARGS extends unknown[]>(body: (...args: ARGS) => Promise<T>) =>
-    async (...args: ARGS): Promise<T> => {
-      try {
-        return await body(...args);
-      } catch (e) {
-        if (n > 0) {
-          return await withRetry(n - 1)(body)(...args);
-        }
-        throw e;
+const withRetry = (n: number, signal: AbortSignal) =>
+  async <T>(body: () => Promise<T>): Promise<T> => {
+    signal.throwIfAborted();
+    try {
+      return await body();
+    } catch (e) {
+      if (n > 0) {
+        return await withRetry(n - 1, signal)(body);
       }
-    };
+      throw e;
+    }
+  };
 
-const getTodo = withRetry(10)(async (id: number) => {
-  const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);
-  return await res.json();
-});
+const getTodo = (id: number, signal: AbortSignal): Promise<unknown> =>
+  withRetry(10, signal)(async () => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, { signal });
+    return await res.json();
+  });
 
-const getTodos = async (from: number, to: number) => {
+const getTodos = async (from: number, to: number): Promise<unknown[]> => {
+  const controller = new AbortController();
   const promises: Promise<any>[] = [];
   for (let n = from; n < to; n++) {
-    promises.push(getTodo(n));
+    promises.push(getTodo(n, controller.signal));
   }
-  return Promise.all(promises);
+  try {
+    return Promise.all(promises);
+  } catch (e) {
+    controller.abort(e);
+    throw e;
+  }
 };
 
 const main = async () => {
