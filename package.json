@@ -7,6 +7,9 @@
     "export": "slidev export",
     "build-examples": "tsc -b ./examples/tsconfig.json"
   },
+  "slidev": {
+    "highlighter": "shiki"
+  },
   "dependencies": {
     "@effect-ts/core": "^0.60.1",
     "@effect/core": "^0.0.2",

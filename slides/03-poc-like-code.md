@@ -6,7 +6,8 @@ layout: center
 
 Fetching a list of TODOs from a public API
 
-```ts
+```ts twoslash
+// @noErrors
 const getTodo = async (id: number): Promise<unknown> => {
   const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);
   return await res.json();
