@@ -18,7 +18,7 @@
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "[markdown]": {
-    "editor.defaultFormatter": "vscode.markdown-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "eslint.validate": ["markdown", "javascript", "typescript"],
   "editor.codeActionsOnSave": {
