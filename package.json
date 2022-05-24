@@ -1,0 +1,34 @@
+{
+  "name": "workers-conf-2022",
+  "private": true,
+  "scripts": {
+    "build": "slidev build",
+    "dev": "slidev --open",
+    "export": "slidev export",
+    "build-examples": "tsc -b ./examples/tsconfig.json"
+  },
+  "dependencies": {
+    "@effect-ts/core": "^0.60.1",
+    "@effect/core": "^0.0.2",
+    "@slidev/cli": "^0.32.3",
+    "@slidev/theme-default": "*",
+    "@slidev/theme-seriph": "*",
+    "@tsplus/stdlib": "^0.0.70",
+    "undici": "^5.2.0"
+  },
+  "devDependencies": {
+    "@phaphoso/eslint-plugin-dprint": "^0.5.2",
+    "@tsplus/stdlib": "0.0.70",
+    "@types/node": "^17.0.35",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "dprint": "^0.29.1",
+    "eslint": "^8.16.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-codegen": "0.16.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "eslint-plugin-sort-destructure-keys": "^1.4.0",
+    "typescript": "4.7.1-rc"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "moduleDetection": "force",
+    "outDir": ".build",
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["**/*.ts"]
+}

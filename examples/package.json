@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "node ../node_modules/typescript/lib/tsc.js -b tsconfig.json"
+  }
+}
