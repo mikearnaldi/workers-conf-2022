@@ -2,5 +2,5 @@ tasks:
   - init: yarn install && yarn build
     command: yarn dev
 ports:
-  - port: 3000
+  - port: 3030
     onOpen: open-browser
