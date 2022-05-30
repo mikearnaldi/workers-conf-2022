@@ -3,4 +3,4 @@ tasks:
     command: yarn dev
 ports:
   - port: 3030
-    onOpen: open-browser
+    onOpen: notify
