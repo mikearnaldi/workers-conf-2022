@@ -10,6 +10,7 @@ export default defineConfig(async () => {
   });
 
   return {
+    server: { hmr: { clientPort: process.env.GITPOD_WORKSPACE_ID ? 443 : undefined } },
     slidev: {
       markdown: {
         markdownItSetup(md) {
