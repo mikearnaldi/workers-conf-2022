@@ -361,4 +361,5 @@ pre .logger.log-log svg {
 
 pre .code-container {
   overflow: hidden;
+  padding: 8px;
 }
