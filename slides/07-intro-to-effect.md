@@ -120,6 +120,8 @@ export * from "./examples/effect/03-lib";
 import { T, H } from "./prelude";
 ```
 
+Pay attention to avoid cyclical dependencies by not using the `prelude` module in any of the modules that re-exports, tools like `eslint` and `madge` may help you prevent this mistake.
+
 ---
 
 # Introduction to Effect
@@ -149,6 +151,8 @@ export const getTodo = (id: number) =>
     )
   );
 ```
+
+Note how the default schedule is composed locally with `S.whileInput` in order to refine its behaviour based on the error type which is fully inferred.
 
 ---
 
