@@ -190,7 +190,7 @@ Defects have a separated channel and their type is lost, that is because defects
 
 We mentioned non-recoverable defects, Effect behind the scenes collect all the errors that may happen during the execution of your program (predicted and not) in a tree-like data type called `Cause<E>`.
 
-The following snippet recovers from all the errors included "non-recoverable" and prints out the full cause.
+The following snippet recovers from all the errors included "non-recoverable" and logs out the full cause together with a message using the error log level.
 
 ```ts twoslash
 // @module: esnext
@@ -217,17 +217,17 @@ export const getTodo = (id: number) =>
 import { T, pipe } from "./prelude"
 import { getTodo } from "./todos"
 
-const log = (message: string) => T.succeed(() => console.log(message))
-
 const program = pipe(
   getTodo(10),
   T.sandbox,
-  T.catchAll((cause) => log(JSON.stringify(cause)))
+  T.catchAll((cause) =>
+    T.logErrorCauseMessage(
+      () => "error encountered while executing",
+      () => cause
+    )
+  )
 );
 ```
-
-Note: `JSON.stringify` is temporary, Effect will provide a default way to pretty print a failure cause that renders the tree like structure showing all the occurred failures.
-
 
 ---
 

@@ -1,6 +1,5 @@
 import * as T from "@effect/core/io/Effect";
 import * as S from "@effect/core/io/Schedule";
-import * as Chunk from "@tsplus/stdlib/collections/Chunk";
 import { pipe } from "@tsplus/stdlib/data/Function";
 import * as H from "./04-http";
 
