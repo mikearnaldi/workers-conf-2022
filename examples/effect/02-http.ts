@@ -21,7 +21,7 @@ export class JsonBodyError {
 
 export const jsonBody = (input: Response) =>
   T.tryCatchPromise(
-    () => input.json(),
+    (): Promise<unknown> => input.json(),
     (error) => new JsonBodyError(error)
   );
 

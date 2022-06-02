@@ -95,3 +95,75 @@ export const defaultRetrySchedule = pipe(
 ```
 
 The `defaultRetrySchedule` above describes a schedule that recurs using a capped exponential backoff growth for a maximum of 30 seconds.
+
+---
+
+# Introduction to Effect
+## Prelude module
+
+To simplify imports in your app it is a common pattern to have a `prelude.ts` module which includes a re-export of modules from both `Effect` and utilities like the following
+
+```ts twoslash
+// @filename: http.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/02-http"
+// @filename: prelude.ts
+// ---cut---
+
+
+export * as T from "@effect/core/io/Effect";
+export * as S from "@effect/core/io/Schedule";
+export { pipe } from "@tsplus/stdlib/data/Function";
+export * as H from "./http";
+
+```
+
+To be used like:
+
+```ts twoslash
+// @module: esnext
+// @filename: prelude.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * as H from "./examples/effect/03-lib";
+// @filename: index.ts
+// ---cut---
+
+
+import { T, H } from "./prelude";
+
+```
+
+---
+
+# Introduction to Effect
+## Using the `fetch` wrapper
+
+In the following snippet we are describing an effect that when executed fetches a todo with the specified ID retying with the default policy while the error is different from a `JsonBodyError`
+
+```ts twoslash
+// @module: esnext
+// @filename: prelude.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * as H from "./examples/effect/03-lib";
+// @filename: index.ts
+// ---cut---
+
+
+import { S, T, H, pipe } from "./prelude";
+
+export const getTodo = (id: string) =>
+  pipe(
+    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    T.flatMap(H.jsonBody),
+    T.retry(() =>
+      pipe(
+        H.defaultRetrySchedule,
+        S.whileInput((error) => error._tag !== "JsonBodyError")
+      )
+    )
+  );
+
+```
