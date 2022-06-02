@@ -126,7 +126,7 @@ To be used like:
 // @filename: prelude.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
-export * as H from "./examples/effect/03-lib";
+export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
 
@@ -147,7 +147,7 @@ In the following snippet we are describing an effect that when executed fetches 
 // @filename: prelude.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
-export * as H from "./examples/effect/03-lib";
+export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
 
