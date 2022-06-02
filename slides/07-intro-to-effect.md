@@ -13,7 +13,7 @@ We'll start by creating a new `http.ts` module that will be used to group fetch 
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 
 // ---cut---
-import * as T from "@effect/core/io/Effect";
+import * as Effect from "@effect/core/io/Effect";
 
 export class FetchError {
   readonly _tag = "FetchError";
@@ -21,12 +21,12 @@ export class FetchError {
 }
 
 export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
-  T.tryCatchPromise(
+  Effect.tryCatchPromise(
     () => fetch(input, init),
     (error) => new FetchError(error)
   );
 ```
-You can use any structure you like to host the error but we advise using a tagged discriminator called `_tag` given we expose combinators like `T.catchTag` that deal with a tagged error channel.
+You can use any structure you like to host the error but we advise using a tagged discriminator called `_tag` given we expose combinators like `Effect.catchTag` that deal with a tagged error channel.
 
 ---
 
@@ -40,7 +40,7 @@ The second function that we may want to wrap in a functional effect is `json`.
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 
 // ---cut---
-import * as T from "@effect/core/io/Effect";
+import * as Effect from "@effect/core/io/Effect";
 
 // previously defined: request
 
@@ -50,7 +50,7 @@ export class JsonBodyError {
 }
 
 export const jsonBody = (input: Response) =>
-  T.tryCatchPromise(
+  Effect.tryCatchPromise(
     (): Promise<unknown> => input.json(),
     (error) => new JsonBodyError(error)
   );
@@ -70,18 +70,18 @@ We may also want to export a default schedule to be used in retry operations.
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 
 // ---cut---
-import * as T from "@effect/core/io/Effect";
-import * as S from "@effect/core/io/Schedule";
-import * as D from "@tsplus/stdlib/data/Duration";
+import * as Effect from "@effect/core/io/Effect";
+import * as Schedule from "@effect/core/io/Schedule";
+import * as Duration from "@tsplus/stdlib/data/Duration";
 import { pipe } from "@tsplus/stdlib/data/Function";
 
 // previously defined: request & jsonBody
 
 export const defaultRetrySchedule = pipe(
-  S.exponential(D.millis(10), 2.0),
-  S.either(S.spaced(() => D.seconds(1))),
-  S.compose(S.elapsed),
-  S.whileOutput(D.lowerThenOrEqual(D.seconds(30)))
+  Schedule.exponential(Duration.millis(10), 2.0),
+  Schedule.either(Schedule.spaced(() => Duration.seconds(1))),
+  Schedule.compose(Schedule.elapsed),
+  Schedule.whileOutput(Duration.lowerThenOrEqual(Duration.seconds(30)))
 );
 ```
 
@@ -101,10 +101,10 @@ To simplify imports in your app it is a common pattern to have a `prelude.ts` mo
 export * from "./examples/effect/02-http"
 // @filename: prelude.ts
 // ---cut---
-export * as T from "@effect/core/io/Effect";
-export * as S from "@effect/core/io/Schedule";
+export * as Effect from "@effect/core/io/Effect";
+export * as Schedule from "@effect/core/io/Schedule";
 export { pipe } from "@tsplus/stdlib/data/Function";
-export * as H from "./http";
+export * as Http from "./http";
 ```
 
 To be used like:
@@ -117,7 +117,7 @@ To be used like:
 export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
-import { T, H } from "./prelude";
+import { Effect, Http } from "./prelude";
 ```
 
 Pay attention to avoid cyclical dependencies by not using the `prelude` module in any of the modules that re-exports, tools like `eslint` and `madge` may help you prevent this mistake.
@@ -137,22 +137,22 @@ In the following snippet we are describing an effect that when executed fetches 
 export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
-import { S, T, H, pipe } from "./prelude";
+import { Schedule, Effect, Http, pipe } from "./prelude";
 
 export const getTodo = (id: number) =>
   pipe(
-    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
-    T.flatMap(H.jsonBody),
-    T.retry(() =>
+    Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    Effect.flatMap(Http.jsonBody),
+    Effect.retry(() =>
       pipe(
-        H.defaultRetrySchedule,
-        S.whileInput((error) => error._tag !== "JsonBodyError")
+        Http.defaultRetrySchedule,
+        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
       )
     )
   );
 ```
 
-Note how the default schedule is composed locally with `S.whileInput` in order to refine its behaviour based on the error type which is fully inferred.
+Note how the default schedule is composed locally with `Schedule.whileInput` in order to refine its behaviour based on the error type which is fully inferred.
 
 ---
 
@@ -169,19 +169,19 @@ We may say that after having performed all retries if we are still in an error c
 export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
-import { S, T, H, pipe } from "./prelude";
+import { Schedule, Effect, Http, pipe } from "./prelude";
 
 export const getTodo = (id: number) =>
   pipe(
-    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
-    T.flatMap(H.jsonBody),
-    T.retry(() =>
+    Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    Effect.flatMap(Http.jsonBody),
+    Effect.retry(() =>
       pipe(
-        H.defaultRetrySchedule,
-        S.whileInput((error) => error._tag !== "JsonBodyError")
+        Http.defaultRetrySchedule,
+        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
       )
     ),
-    T.orDie
+    Effect.orDie
   );
 ```
 
@@ -203,29 +203,29 @@ The following snippet recovers from all the errors included "non-recoverable" an
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/03-lib";
 // @filename: todos.ts
-import { S, T, H, pipe } from "./prelude";
+import { Schedule, Effect, Http, pipe } from "./prelude";
 export const getTodo = (id: number) =>
   pipe(
-    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
-    T.flatMap(H.jsonBody),
-    T.retry(() =>
+    Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    Effect.flatMap(Http.jsonBody),
+    Effect.retry(() =>
       pipe(
-        H.defaultRetrySchedule,
-        S.whileInput((error) => error._tag !== "JsonBodyError")
+        Http.defaultRetrySchedule,
+        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
       )
     ),
-    T.orDie
+    Effect.orDie
   );
 // @filename: index.ts
 // ---cut---
-import { T, pipe } from "./prelude"
+import { Effect, pipe } from "./prelude"
 import { getTodo } from "./todos"
 
 const program = pipe(
   getTodo(10),
-  T.sandbox,
-  T.catchAll((cause) =>
-    T.logErrorCauseMessage(
+  Effect.sandbox,
+  Effect.catchAll((cause) =>
+    Effect.logErrorCauseMessage(
       () => "error encountered while executing",
       () => cause
     )
@@ -240,7 +240,7 @@ const program = pipe(
 
 Effects can describe interruptible computations with a very rich semantic, in fact differently from most of the frameworks that deal with cancelation in Effect cancellation is itself an effect and is, by nature, asyncronious.
 
-The following snippet uses the `T.asyncInterrupt` constructor to create an interruptible fetch wrapper.
+The following snippet uses the `Effect.asyncInterrupt` constructor to create an interruptible fetch wrapper.
 
 ```ts twoslash
 // @module: esnext
@@ -252,18 +252,18 @@ export class FetchError {
   constructor(readonly error: unknown) {}
 }
 // ---cut---
-import * as T from "@effect/core/io/Effect";
-import * as E from "@tsplus/stdlib/data/Either";
+import * as Effect from "@effect/core/io/Effect";
+import * as Either from "@tsplus/stdlib/data/Either";
 
 export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
-  T.asyncInterrupt<never, FetchError, Response>((resume) => {
+  Effect.asyncInterrupt<never, FetchError, Response>((resume) => {
     const controller = new AbortController();
     fetch(input, { ...(init ?? {}), signal: controller.signal }).then((response) => {
-      resume(T.succeed(() => response));
+      resume(Effect.succeed(() => response));
     }).catch((error) => {
-      resume(T.fail(() => new FetchError(error)));
+      resume(Effect.fail(() => new FetchError(error)));
     });
-    return E.left(T.succeed(() => {
+    return Either.left(Effect.succeed(() => {
       controller.abort();
     }));
   });
@@ -286,18 +286,18 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import { T, pipe } from "./prelude";
-import * as H from "./http";
-export declare const getTodo: (id: number) => T.Effect<never, H.FetchError | H.JsonBodyError, unknown>
+import { Effect, pipe } from "./prelude";
+import * as Http from "./http";
+export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
 export const getTodos = (ids: number[]) =>
-  T.forEachPar(
+  Effect.forEachPar(
     () => ids,
     (id) => getTodo(id)
   );
 ```
 
-Controlling how many operations are allowed to run in parallel is done by using the `T.withParallelism` aspect.
+Controlling how many operations are allowed to run in parallel is done by using the `Effect.withParallelism` aspect.
 
 ```ts twoslash
 // @module: esnext
@@ -309,16 +309,16 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import { T, pipe } from "./prelude";
-import * as H from "./http";
-export declare const getTodo: (id: number) => T.Effect<never, H.FetchError | H.JsonBodyError, unknown>
+import { Effect, pipe } from "./prelude";
+import * as Http from "./http";
+export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
 export const getTodos = (ids: number[]) =>
   pipe(
-    T.forEachPar(
+    Effect.forEachPar(
       () => ids,
       (id) => getTodo(id)
     ),
-    T.withParallelism(15)
+    Effect.withParallelism(15)
   );
 ```

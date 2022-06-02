@@ -1,5 +1,5 @@
-import * as T from "@effect/core/io/Effect";
+import * as Effect from "@effect/core/io/Effect";
 
-const main = T.succeed(() => console.log("hello world"));
+const main = Effect.succeed(() => console.log("hello world"));
 
-T.unsafeRunPromise(main).catch(console.error);
+Effect.unsafeRunPromise(main).catch(console.error);
