@@ -366,3 +366,18 @@ pre .code-container {
   padding-top: 10px;
   padding-bottom: 10px;
 }
+
+.slidev-layout h1 {
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+
+.slidev-layout h2 {
+  font-size: 1.5rem;
+  line-height: 1.8rem;
+}
+
+.slidev-layout.cover h1,
+.slidev-layout.intro h1 {
+  font-size: 2.8rem;
+}
