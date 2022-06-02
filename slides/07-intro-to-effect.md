@@ -211,6 +211,8 @@ Defects have a separated channel and their type is lost, that is because defects
 
 We mentioned non-recoverable defects, Effect behind the scenes collect all the errors that may happen during the execution of your program (predicted and not) in a tree-like data type called `Cause<E>`.
 
+The following snippet recovers from all the errors included "non-recoverable" and prints out the full cause.
+
 ```ts twoslash
 // @module: esnext
 // @filename: prelude.ts
