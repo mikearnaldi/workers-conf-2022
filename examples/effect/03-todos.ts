@@ -3,7 +3,7 @@ import * as S from "@effect/core/io/Schedule";
 import { pipe } from "@tsplus/stdlib/data/Function";
 import * as H from "./02-http";
 
-export const getTodo = (id: string) =>
+export const getTodo = (id: number) =>
   pipe(
     H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
     T.flatMap(H.jsonBody),

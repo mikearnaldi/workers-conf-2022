@@ -154,7 +154,7 @@ export * from "./examples/effect/03-lib";
 
 import { S, T, H, pipe } from "./prelude";
 
-export const getTodo = (id: string) =>
+export const getTodo = (id: number) =>
   pipe(
     H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
     T.flatMap(H.jsonBody),
@@ -167,3 +167,86 @@ export const getTodo = (id: string) =>
   );
 
 ```
+
+---
+
+# Introduction to Effect
+## Using the `fetch` wrapper
+
+We may say that after having performed all retries if we are still in an error case we consider it non recoverable. Given an Effect using `orDie` will consider all failures as non-recoverable defects.
+
+```ts twoslash
+// @module: esnext
+// @filename: prelude.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: index.ts
+// ---cut---
+
+
+import { S, T, H, pipe } from "./prelude";
+
+export const getTodo = (id: number) =>
+  pipe(
+    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    T.flatMap(H.jsonBody),
+    T.retry(() =>
+      pipe(
+        H.defaultRetrySchedule,
+        S.whileInput((error) => error._tag !== "JsonBodyError")
+      )
+    ),
+    T.orDie
+  );
+
+```
+
+Defects have a separated channel and their type is lost, that is because defects can happen everywhere.
+
+---
+
+# Introduction to Effect
+## The Failure Cause
+
+We mentioned non-recoverable defects, Effect behind the scenes collect all the errors that may happen during the execution of your program (predicted and not) in a tree-like data type called `Cause<E>`.
+
+```ts twoslash
+// @module: esnext
+// @filename: prelude.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos.ts
+import { S, T, H, pipe } from "./prelude";
+
+export const getTodo = (id: number) =>
+  pipe(
+    H.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    T.flatMap(H.jsonBody),
+    T.retry(() =>
+      pipe(
+        H.defaultRetrySchedule,
+        S.whileInput((error) => error._tag !== "JsonBodyError")
+      )
+    ),
+    T.orDie
+  );
+// @filename: index.ts
+// ---cut---
+
+import { T, pipe } from "./prelude"
+import { getTodo } from "./todos"
+
+const program = pipe(
+  getTodo(10),
+  T.sandbox,
+  T.catchAll((cause) =>
+    T.succeed(() => {
+      console.log(JSON.stringify(cause));
+    })
+  )
+);
+```
+
+Note: `JSON.stringify` is temporary, Effect will provide a default way to pretty print a failure cause that renders the tree like structure showing all the occurred failures.
