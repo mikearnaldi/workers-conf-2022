@@ -127,7 +127,7 @@ Pay attention to avoid cyclical dependencies by not using the `prelude` module i
 # Introduction to Effect
 ## Using the `fetch` wrapper
 
-In the following snippet we are describing an effect that when executed fetches a todo with the specified ID retying with the default policy while the error is different from a `JsonBodyError`
+In the following snippet we are describing an effect that when executed fetches a todo with the specified ID retrying with the default policy while the error is different from a `JsonBodyError`
 
 ```ts twoslash
 // @module: esnext
