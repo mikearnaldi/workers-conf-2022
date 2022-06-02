@@ -284,16 +284,13 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import * as T from "@effect/core/io/Effect";
-import * as S from "@effect/core/io/Schedule";
-import * as Chunk from "@tsplus/stdlib/collections/Chunk";
-import { pipe } from "@tsplus/stdlib/data/Function";
+import { T, pipe } from "./prelude";
 import * as H from "./http";
 export declare const getTodo: (id: number) => T.Effect<never, H.FetchError | H.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (from: number, to: number) => 
+export const getTodos = (ids: number[]) =>
   T.forEachPar(
-    () => Chunk.range(from, to), 
+    () => ids,
     (id) => getTodo(id)
   );
 ```
@@ -310,19 +307,16 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import * as T from "@effect/core/io/Effect";
-import * as S from "@effect/core/io/Schedule";
-import * as Chunk from "@tsplus/stdlib/collections/Chunk";
-import { pipe } from "@tsplus/stdlib/data/Function";
+import { T, pipe } from "./prelude";
 import * as H from "./http";
 export declare const getTodo: (id: number) => T.Effect<never, H.FetchError | H.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (from: number, to: number) =>
+export const getTodos = (ids: number[]) =>
   pipe(
     T.forEachPar(
-      () => Chunk.range(from, to),
+      () => ids,
       (id) => getTodo(id)
     ),
-    T.withParallelism(10)
+    T.withParallelism(15)
   );
 ```

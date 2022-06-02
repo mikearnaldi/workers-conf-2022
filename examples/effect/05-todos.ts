@@ -16,4 +16,11 @@ export const getTodo = (id: number) =>
     )
   );
 
-export const getTodos = (from: number, to: number) => T.forEachPar(() => Chunk.range(from, to), (id) => getTodo(id));
+export const getTodos = (ids: number[]) =>
+  pipe(
+    T.forEachPar(
+      () => ids,
+      (id) => getTodo(id)
+    ),
+    T.withParallelism(10)
+  );
