@@ -1,12 +1,19 @@
 import "@slidev/cli";
+import ts from "typescript";
 import { defineConfig } from "vite";
+
+const tsCompilerOptions: ts.CompilerOptions = {
+  target: ts.ScriptTarget.ES2015,
+  strict: true
+};
 
 export default defineConfig(async () => {
   const { markdownItShikiTwoslashSetup } = await import("markdown-it-shiki-twoslash");
 
   const shiki = await markdownItShikiTwoslashSetup({
     theme: "vitesse-dark",
-    includeJSDocInHover: true
+    includeJSDocInHover: true,
+    defaultCompilerOptions: tsCompilerOptions
   });
 
   return {
