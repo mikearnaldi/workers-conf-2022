@@ -217,14 +217,12 @@ export const getTodo = (id: number) =>
 import { T, pipe } from "./prelude"
 import { getTodo } from "./todos"
 
+const log = (message: string) => T.succeed(() => console.log(message))
+
 const program = pipe(
   getTodo(10),
   T.sandbox,
-  T.catchAll((cause) =>
-    T.succeed(() => {
-      console.log(JSON.stringify(cause));
-    })
-  )
+  T.catchAll((cause) => log(JSON.stringify(cause)))
 );
 ```
 
