@@ -19,7 +19,7 @@ pre.shiki {
   color: black;
 
   /* Give it some space to breathe */
-  padding: 4px;
+  padding: 12px;
 
   /* All code samples get a grey border, twoslash ones get a different color */
   /* border-left: 1px solid #999; */
@@ -34,6 +34,7 @@ pre.shiki {
 
 pre.shiki {
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 pre.shiki:hover .dim {
@@ -102,7 +103,7 @@ pre .code-container {
 }
 
 pre .code-container .line {
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 /* The try button */
@@ -365,8 +366,7 @@ pre .logger.log-log svg {
 
 pre .code-container {
   overflow: hidden;
-  padding-left: 4px;
-  padding-right: 4px;
+  font-size: 0.9rem;
 }
 
 .slidev-layout h1 {
