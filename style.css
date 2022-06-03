@@ -2,7 +2,7 @@
 
 /*  Start of Shiki Twoslash CSS:
 
-Code blocks structurally look like: 
+Code blocks structurally look like:
 
 <pre class='shiki lsp twoslash [theme-name]'>
   <div class='language-id'>[lang-id]</div>
@@ -10,7 +10,7 @@ Code blocks structurally look like:
       <code>[the code as a series of spans]</code>
       <a href='playground...'>Try</a> (optional)
     </div>
-  </pre> 
+  </pre>
 */
 
 pre.shiki {
@@ -19,7 +19,7 @@ pre.shiki {
   color: black;
 
   /* Give it some space to breathe */
-  padding: 12px;
+  padding: 4px;
 
   /* All code samples get a grey border, twoslash ones get a different color */
   /* border-left: 1px solid #999; */
@@ -99,6 +99,10 @@ pre.twoslash data-lsp:hover::before {
 
 pre .code-container {
   overflow: auto;
+}
+
+pre .code-container .line {
+  padding-bottom: 6px;
 }
 
 /* The try button */
@@ -363,8 +367,6 @@ pre .code-container {
   overflow: hidden;
   padding-left: 4px;
   padding-right: 4px;
-  padding-top: 8px;
-  padding-bottom: 8px;
 }
 
 .slidev-layout h1 {
