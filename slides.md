@@ -6,5 +6,9 @@ src: ./slides/01-cover.md
 ---
 
 ---
-src: ./slides/07-intro-to-effect.md
+src: ./slides/02-motivation.md
+---
+
+---
+src: ./slides/03-intro-to-effect.md
 ---

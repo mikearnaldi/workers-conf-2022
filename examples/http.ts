@@ -13,7 +13,9 @@ const getTodos = async (from: number, to: number) => {
 
 const main = async () => {
   const todos = await getTodos(1, 10);
-  console.log(todos);
+  for (const todo of todos) {
+    console.log(`Got a todo: ${JSON.stringify(todo)}`);
+  }
 };
 
 main().catch((error) => {
