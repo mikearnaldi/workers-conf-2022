@@ -1,4 +1,5 @@
 import * as Effect from "@effect/core/io/Effect";
+import * as Exit from "@effect/core/io/Exit";
 import * as Schedule from "@effect/core/io/Schedule";
 import { pipe } from "@tsplus/stdlib/data/Function";
 import * as Http from "./04-http";
@@ -23,3 +24,10 @@ export const getTodos = (ids: number[]) =>
     ),
     Effect.withParallelism(10)
   );
+
+
+Effect.unsafeRunAsyncWith(getTodo(0), (exit) => {
+  if (Exit.isFailure(exit)) {
+    console.error(`Unexpected failure: ${JSON.stringify(exit.cause)}`)
+  }
+})

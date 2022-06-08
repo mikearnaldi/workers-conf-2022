@@ -1,12 +1,14 @@
 ---
+layout: center
+---
+
+# Welcome to Effect
+
+---
 layout: full
 ---
 
-# Introduction to Effect
-
-## Creating a `fetch` wrapper
-
-We'll start by creating a new `http.ts` module that will be used to group fetch related functions, let's start by `fetch` itself.
+# Creating a `fetch` wrapper
 
 ```ts twoslash
 /// <reference path="node_modules/@types/node/index.d.ts" />
@@ -25,24 +27,6 @@ export const request = (input: RequestInfo | URL, init?: RequestInit | undefined
     () => fetch(input, init),
     (error) => new FetchError(error)
   );
-```
-You can use any structure you like to host the error but we advise using a tagged discriminator called `_tag` given we expose combinators like `Effect.catchTag` that deal with a tagged error channel.
-
----
-
-# Introduction to Effect
-## Creating a `fetch` wrapper
-
-The second function that we may want to wrap in a functional effect is `json`.
-
-```ts twoslash
-/// <reference path="node_modules/@types/node/index.d.ts" />
-/// <reference path="node_modules/@effect/core/index.d.ts" />
-
-// ---cut---
-import * as Effect from "@effect/core/io/Effect";
-
-// previously defined: request
 
 export class JsonBodyError {
   readonly _tag = "JsonBodyError";
@@ -56,53 +40,24 @@ export const jsonBody = (input: Response) =>
   );
 ```
 
-Note how even in this case we isolated the error to be specific to the effect we are performing and additionally we specify the return type as `Promise<unknown>` in order to avoid implicitly ending up with `any`.
-
+---
+layout: center
 ---
 
-# Introduction to Effect
-## Creating a `fetch` wrapper
+# Common module
 
-We may also want to export a default schedule to be used in retry operations.
-
-```ts twoslash
-/// <reference path="node_modules/@types/node/index.d.ts" />
-/// <reference path="node_modules/@effect/core/index.d.ts" />
-
-// ---cut---
-import * as Effect from "@effect/core/io/Effect";
-import * as Schedule from "@effect/core/io/Schedule";
-import * as Duration from "@tsplus/stdlib/data/Duration";
-import { pipe } from "@tsplus/stdlib/data/Function";
-
-// previously defined: request & jsonBody
-
-export const defaultRetrySchedule = pipe(
-  Schedule.exponential(Duration.millis(10), 2.0),
-  Schedule.either(Schedule.spaced(() => Duration.seconds(1))),
-  Schedule.compose(Schedule.elapsed),
-  Schedule.whileOutput(Duration.lowerThenOrEqual(Duration.seconds(30)))
-);
-```
-
-The `defaultRetrySchedule` above describes a schedule that recurs using a capped exponential backoff growth for a maximum of 30 seconds.
-
----
-
-# Introduction to Effect
-## Prelude module
-
-To simplify imports in your app it is a common pattern to have a `prelude.ts` module which includes a re-export of modules from both `Effect` and utilities like the following
+To simplify imports in your app it is a common pattern to have a `common.ts` module which includes a re-export of modules from both `Effect` and utilities like the following
 
 ```ts twoslash
 // @filename: http.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/02-http"
-// @filename: prelude.ts
+// @filename: common.ts
 // ---cut---
 export * as Effect from "@effect/core/io/Effect";
 export * as Schedule from "@effect/core/io/Schedule";
+export * as Duration from "@tsplus/stdlib/data/Duration";
 export { pipe } from "@tsplus/stdlib/data/Function";
 export * as Http from "./http";
 ```
@@ -111,132 +66,177 @@ To be used like:
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
-import { Effect, Http } from "./prelude";
+import { Effect, Http } from "./common";
 ```
 
-Pay attention to avoid cyclical dependencies by not using the `prelude` module in any of the modules that re-exports, tools like `eslint` and `madge` may help you prevent this mistake.
+Pay attention to avoid cyclical dependencies by not using the `common` module in any of the modules that re-exports, tools like `eslint` and `madge` may help you prevent this mistake.
 
 ---
+layout: full
+---
 
-# Introduction to Effect
-## Using the `fetch` wrapper
-
-In the following snippet we are describing an effect that when executed fetches a todo with the specified ID retrying with the default policy while the error is different from a `JsonBodyError`
+# Using the `fetch` wrapper
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/03-lib";
 // @filename: index.ts
 // ---cut---
-import { Schedule, Effect, Http, pipe } from "./prelude";
+import { Effect, Http, pipe } from "./common";
 
 export const getTodo = (id: number) =>
   pipe(
     Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
-    Effect.flatMap(Http.jsonBody),
-    Effect.retry(() =>
-      pipe(
-        Http.defaultRetrySchedule,
-        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
-      )
-    )
+    Effect.flatMap(Http.jsonBody)
   );
+
+export const getTodos = (ids: number[]) => 
+  Effect.forEach(() => ids, (id) => getTodo(id)) 
 ```
 
-Note how the default schedule is composed locally with `Schedule.whileInput` in order to refine its behaviour based on the error type which is fully inferred.
+Looking at the types inferred from TS we can explicitely see `getTodo` may returns: 
+
+```ts
+Effect<never, FetchError | JsonBodyError, unknown>
+```
+
+Which can be read as `one operation that has no requirements, and when performed may fail for either a FetchError or for a JsonBodyError and when succesful returns unknown`
 
 ---
+layout: full
+---
 
-# Introduction to Effect
-## Using the `fetch` wrapper
+# Handling Failures
 
-We may say that after having performed all retries if we are still in an error case we consider it non recoverable. Given an Effect using `orDie` will consider all failures as non-recoverable defects.
+Effect programs when executed may encounter failure due to predictable circumstances that may trigger recovery procedures and unexpected exceptions.
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
-/// <reference path="node_modules/@types/node/index.d.ts" />
-/// <reference path="node_modules/@effect/core/index.d.ts" />
-export * from "./examples/effect/03-lib";
-// @filename: index.ts
-// ---cut---
-import { Schedule, Effect, Http, pipe } from "./prelude";
-
-export const getTodo = (id: number) =>
-  pipe(
-    Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
-    Effect.flatMap(Http.jsonBody),
-    Effect.retry(() =>
-      pipe(
-        Http.defaultRetrySchedule,
-        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
-      )
-    ),
-    Effect.orDie
-  );
-```
-
-Defects have a separated channel and their type is lost, that is because defects can happen everywhere.
-
----
-
-# Introduction to Effect
-## The Failure Cause
-
-We mentioned non-recoverable defects, Effect behind the scenes collect all the errors that may happen during the execution of your program (predicted and not) in a tree-like data type called `Cause<E>`.
-
-The following snippet recovers from all the errors included "non-recoverable" and logs out the full cause together with a message using the error log level.
-
-```ts twoslash
-// @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/03-lib";
 // @filename: todos.ts
-import { Schedule, Effect, Http, pipe } from "./prelude";
+export * from "./examples/effect/03-todos";
+// @filename: index.ts
+// ---cut---
+import { Schedule, Effect, Http, Exit, pipe } from "./common";
+import * as Todos from "./todos";
+
+export const program = Effect.struct({
+  first: Todos.getTodo(1),
+  second: Todos.getTodo(2)
+})
+
+export const main = pipe(
+  program,
+  Effect.flatMap((todos) => Effect.logInfo(() => `Todos: ${JSON.stringify(todos)}`)),
+  Effect.catchTag("FetchError", (error) => Effect.logError(() => `FetchError: ${JSON.stringify(error)}`)),
+  Effect.catchTag("JsonBodyError", (error) => Effect.logError(() => `JsonBodyError: ${JSON.stringify(error)}`))
+)
+
+Effect.unsafeRunAsyncWith(main, (exit) => {
+  if (Exit.isFailure(exit)) {
+    console.error(`Unexpected failure: ${JSON.stringify(exit.cause)}`)
+  }
+})
+```
+
+---
+layout: center
+---
+
+# Resilience on failures
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: index.ts
+// ---cut---
+import { Schedule, Effect, Http, Duration, pipe } from "./common";
+
+export const retrySchedule = pipe(
+  Schedule.exponential(Duration.millis(10), 2.0),
+  Schedule.either(Schedule.spaced(() => Duration.seconds(1))),
+  Schedule.compose(Schedule.elapsed),
+  Schedule.whileOutput(Duration.lowerThenOrEqual(Duration.seconds(30)))
+);
+
 export const getTodo = (id: number) =>
   pipe(
     Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
     Effect.flatMap(Http.jsonBody),
     Effect.retry(() =>
       pipe(
-        Http.defaultRetrySchedule,
+        retrySchedule,
+        Schedule.whileInput((error) => error._tag !== "JsonBodyError")
+      )
+    )
+  );
+```
+
+Note how the default schedule is composed locally with `Schedule.whileInput` in order to refine its behaviour.
+
+---
+layout: center
+---
+
+# Failure Escalation
+
+To control the boundaries of explicitness of errors it may happend that you want to turn failures into defect, for example in the case of `getTodo` if after the retry policy we still have an error there is pretty much nothing else we can do with it and carrying the information at the type level may be both verbose and an implementation detail leak.
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: index.ts
+
+import { Effect, Http, Schedule, Duration, pipe } from "./common"
+
+export const retrySchedule = pipe(
+  Schedule.exponential(Duration.millis(10), 2.0),
+  Schedule.either(Schedule.spaced(() => Duration.seconds(1))),
+  Schedule.compose(Schedule.elapsed),
+  Schedule.whileOutput(Duration.lowerThenOrEqual(Duration.seconds(30)))
+);
+
+// ---cut---
+
+export const getTodo = (id: number) =>
+  pipe(
+    Http.request(`https://jsonplaceholder.typicode.com/todos/${id}`),
+    Effect.flatMap(Http.jsonBody),
+    Effect.retry(() =>
+      pipe(
+        retrySchedule,
         Schedule.whileInput((error) => error._tag !== "JsonBodyError")
       )
     ),
     Effect.orDie
   );
-// @filename: index.ts
-// ---cut---
-import { Effect, pipe } from "./prelude"
-import { getTodo } from "./todos"
-
-const program = pipe(
-  getTodo(10),
-  Effect.sandbox,
-  Effect.catchAll((cause) =>
-    Effect.logErrorCauseMessage(
-      () => "error encountered while executing",
-      () => cause
-    )
-  )
-);
 ```
 
+We can see by looking at the types that the error type has now disappeared. You can recover from ALL failures including defects by using functions like `Effect.catchAllCause` or turn the error into a full `Cause<E>` using `Effect.sandbox`.
+
+---
+layout: center
 ---
 
-# Introduction to Effect
-## Interruption
+# Interruption
 
 Effects can describe interruptible computations with a very rich semantic, in fact differently from most of the frameworks that deal with cancelation in Effect cancellation is itself an effect and is, by nature, asyncronious.
 
@@ -244,7 +244,7 @@ The following snippet uses the `Effect.asyncInterrupt` constructor to create an 
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export class FetchError {
@@ -269,16 +269,19 @@ export const request = (input: RequestInfo | URL, init?: RequestInit | undefined
   });
 ```
 
+That's it interruption is propagated through program execution without explicitly passing signals or controllers.
+
+---
+layout: full
 ---
 
-# Introduction to Effect
-## Controlled concurrency
+# Controlled concurrency
 
 The following snippet of code describes a program that when executed fetches a list of `TODOs` from the API in parallel, the execution will terminate at the first request failure and all ongoing requests will be interrupted.
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/06-lib";
@@ -286,22 +289,18 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import { Effect, pipe } from "./prelude";
+import { Effect, pipe } from "./common";
 import * as Http from "./http";
 export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (ids: number[]) =>
-  Effect.forEachPar(
-    () => ids,
-    (id) => getTodo(id)
-  );
+export const getTodos = (ids: number[]) => Effect.forEachPar(() => ids, (id) => getTodo(id));
 ```
 
 Controlling how many operations are allowed to run in parallel is done by using the `Effect.withParallelism` aspect.
 
 ```ts twoslash
 // @module: esnext
-// @filename: prelude.ts
+// @filename: common.ts
 /// <reference path="node_modules/@types/node/index.d.ts" />
 /// <reference path="node_modules/@effect/core/index.d.ts" />
 export * from "./examples/effect/06-lib";
@@ -309,16 +308,37 @@ export * from "./examples/effect/06-lib";
 // @filename: http.ts
 export * from "./examples/effect/04-http";
 // @filename: todos.ts
-import { Effect, pipe } from "./prelude";
+import { Effect, pipe } from "./common";
 import * as Http from "./http";
 export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (ids: number[]) =>
-  pipe(
-    Effect.forEachPar(
-      () => ids,
-      (id) => getTodo(id)
-    ),
-    Effect.withParallelism(15)
-  );
+export const getTodos = (ids: number[]) => pipe(
+  Effect.forEachPar(() => ids, (id) => getTodo(id)),
+  Effect.withParallelism(15)
+);
+```
+
+Or leave it to the caller:
+
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/06-lib";
+// @module: esnext
+// @filename: http.ts
+export * from "./examples/effect/04-http";
+// @filename: todos.ts
+import { Effect, pipe } from "./common";
+import * as Http from "./http";
+export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
+// ---cut---
+export const getTodos = (ids: number[]) => Effect.forEachPar(() => ids, (id) => getTodo(id));
+
+export const program = pipe(
+  getTodos([0, 1, 2, 3]),
+  Effect.withParallelism(3)
+)
 ```

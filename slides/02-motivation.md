@@ -1,28 +1,10 @@
 ---
-layout: center
----
-
-# Motivation
-
-## From Proof of Concept to Producton
-
-Writing good code has never been easy, when hacking together POCs we focus on the happy path and we don’t care too much about performance, when not trying to write good code we can move fast, or at least we think we can.
-
-All is good up till the point where we start productionizing what we’ve built and problems start to bubble up from everywhere.
-
-Let's have a look at what it usually takes!
-
----
 layout: full
 ---
 
-# Motivation
+# POC Like Code
 
-## POC Like Code
-
-We would like to build a small application that fetches a list of `TODOs` from the [{JSON} Placeholder](https://jsonplaceholder.typicode.com) API.
-
-We will start by creating some basic functions that enable us to fetch the todos:
+Building a small application that fetches a list of `TODOs` from the [{JSON} Placeholder](https://jsonplaceholder.typicode.com) API.
 
 ```ts twoslash
 /// <reference path="node_modules/@types/node/index.d.ts" />
@@ -49,27 +31,24 @@ const main = async () => {
 ```
 
 ---
-
-# Motivation
-## Requirements
-
-Production code has to deal with reality, and reality is everything but the happy path, to ensure things work in production we end up having to do a lot more.
-
-For example:
-- Concurrency, ideally controlled
-- Interruption, ongoing operations should be interrupted on failures and on graceful shutdown, ideally in a safe manner (e.g. stopping one thing that depends on another first stops the other then stops)
-- Resilience on errors, ideally fine tuned depending on the error and "intelligent" (e.g. capped exponential backoff)
-- Logging, ideally multi-level with escalation
-- Metrics, the application should collect both system level metrics and custom ones
-- Tracing, the application should be observable via e.g. OpenTelemetry
-- Etc...
-
+layout: center
 ---
 
-# Motivation
-## Concurrency
+# From POC to Production
 
-Let's start by making things parallel.
+Production code has to deal with reality, and reality is everything but the happy path. 
+
+Let's see what it takes!
+
+---
+layout: full
+---
+
+# Concurrency
+
+Maximising efficiency requires doing things in parallel as much as possible.
+
+Unbounded parallelism isn't too hard:
 
 ```ts twoslash
 /// <reference path="node_modules/@types/node/index.d.ts" />
@@ -88,7 +67,7 @@ const getTodos = async (ids: number[]) => {
 };
 ```
 
-Good... Now let's limit the parallelism to never fetch more than 5 at the same time.
+Things gets more complicated when we want to control the concurrency.
 
 ```ts twoslash
 /// <reference path="node_modules/@types/node/index.d.ts" />
@@ -110,11 +89,14 @@ const getTodos = async (ids: number[]) => {
 ```
 
 ---
+layout: full
+---
 
-# Motivation
-## Concurrency
+# Concurrency
 
-Is that it? We are not really maximising parallelism, we are simply chunking up requests... This may be better:
+Is that it? 
+
+We are not really maximising parallelism, we are simply chunking up requests... This may be better:
 
 <style>
 pre .code-container {
@@ -162,11 +144,12 @@ const getTodos = (ids: number[], limit = 5) => {
 ```
 
 ---
+layout: full
+---
 
-# Motivation
-## Interruption
+# Interruption
 
-We will be using the javascript standard `AbortController`, doing better wouldn't fit the slides:
+Ongoing operations should be interrupted on failures:
 
 <style>
 pre .code-container {
@@ -224,12 +207,15 @@ const getTodos = (ids: number[], opt?: { limit?: number; signal?: AbortSignal; }
 };
 ```
 
+And we still don't have interruption on program shutdown, and especially async interruption...
+
+---
+layout: full
 ---
 
-# Motivation
-## Resilience
+# Resilience on errors
 
-Let's implement a minimal exponential backoff retry policy with an optional cap and limit:
+Our software should be resilient on failures, especially when dealing with things like http requests or any kind of network dependent activity.
 
 <style>
 pre .code-container {
@@ -271,3 +257,31 @@ const getTodo = (id: number, opt?: { signal?: AbortSignal; }): Promise<unknown> 
     return await res.json();
   }, { limit: 10, cap: 2000, base: 2, exp: 10 });
 ```
+
+That's a simple capped exponential backoff, missing timeouts and error specializaion.
+
+---
+layout: center
+---
+
+# We haven't even started
+We'll be needing to figure out a long list of further requirements.
+
+<v-clicks>
+
+- Logging
+- Metrics
+- Tracing
+- Dependency Injection
+- Etc.
+
+</v-clicks>
+
+---
+layout: center
+---
+
+# What about Maintainability?
+
+The code looked pretty awful even to understand, let alone extending it...
+

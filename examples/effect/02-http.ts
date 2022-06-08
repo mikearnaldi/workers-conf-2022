@@ -8,7 +8,7 @@ export class FetchError {
   constructor(readonly error: unknown) {}
 }
 
-export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
+export const request = (input: RequestInfo, init?: RequestInit | undefined) =>
   Effect.tryCatchPromise(
     () => fetch(input, init),
     (error) => new FetchError(error)
@@ -31,3 +31,4 @@ export const defaultRetrySchedule = pipe(
   Schedule.compose(Schedule.elapsed),
   Schedule.whileOutput(Duration.lowerThenOrEqual(Duration.seconds(30)))
 );
+

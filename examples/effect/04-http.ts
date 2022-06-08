@@ -9,7 +9,7 @@ export class FetchError {
   constructor(readonly error: unknown) {}
 }
 
-export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
+export const request = (input: RequestInfo, init?: RequestInit | undefined) =>
   Effect.asyncInterrupt<never, FetchError, Response>((resume) => {
     const controller = new AbortController();
     fetch(input, { ...(init ?? {}), signal: controller.signal }).then((response) => {
