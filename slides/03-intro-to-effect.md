@@ -412,7 +412,7 @@ export const getTodo = (id: number) => pipe(
 
 export const getTodos = (ids: number[]) => pipe(
   Todos.getTodos(ids),
-  Effect.withSpanAttribute("ids", id),
+  Effect.withSpanAttribute("ids", ids),
   Effect.withSpan("GetTodos")
 )
 ```
