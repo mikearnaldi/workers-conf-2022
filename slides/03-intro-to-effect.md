@@ -100,7 +100,7 @@ export const getTodo = (id: number) =>
   );
 
 export const getTodos = (ids: number[]) => 
-  Effect.forEach(() => ids, (id) => getTodo(id)) 
+  Effect.collectAll(() => ids.map(getTodo)) 
 ```
 
 Looking at the types inferred from TS we can explicitely see `getTodo` may returns: 
@@ -293,7 +293,7 @@ import { Effect, pipe } from "./common";
 import * as Http from "./http";
 export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (ids: number[]) => Effect.forEachPar(() => ids, (id) => getTodo(id));
+export const getTodos = (ids: number[]) => Effect.collectAllPar(() => ids.map(getTodo));
 ```
 
 Controlling how many operations are allowed to run in parallel is done by using the `Effect.withParallelism` aspect.
@@ -313,7 +313,7 @@ import * as Http from "./http";
 export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
 export const getTodos = (ids: number[]) => pipe(
-  Effect.forEachPar(() => ids, (id) => getTodo(id)),
+  Effect.collectAllPar(() => ids.map(getTodo)),
   Effect.withParallelism(15)
 );
 ```
@@ -335,7 +335,7 @@ import { Effect, pipe } from "./common";
 import * as Http from "./http";
 export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchError | Http.JsonBodyError, unknown>
 // ---cut---
-export const getTodos = (ids: number[]) => Effect.forEachPar(() => ids, (id) => getTodo(id));
+export const getTodos = (ids: number[]) => Effect.collectAllPar(() => ids.map(getTodo));
 
 export const program = pipe(getTodos([0, 1, 2, 3]), Effect.withParallelism(3))
 ```
