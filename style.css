@@ -100,7 +100,7 @@ pre.twoslash data-lsp:hover::before {
 
 pre .code-container {
   overflow: auto;
-  font-size: 0.9em;
+  font-size: 16px;
 }
 
 pre .code-container .line {

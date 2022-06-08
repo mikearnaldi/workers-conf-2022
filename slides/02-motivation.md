@@ -101,7 +101,7 @@ We are not really maximising parallelism, we are simply chunking up requests... 
 <style>
 pre .code-container {
   overflow: hidden;
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 pre .code-container .line {
   padding-bottom: 3px;
@@ -154,7 +154,7 @@ Ongoing operations should be interrupted on failures:
 <style>
 pre .code-container {
   overflow: hidden;
-  font-size: 0.7rem;
+  font-size: 11px;
 }
 pre .code-container .line {
   padding-bottom: 0px;
@@ -220,7 +220,7 @@ Our software should be resilient on failures, especially when dealing with thing
 <style>
 pre .code-container {
   overflow: hidden;
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 pre .code-container .line {
   padding-bottom: 2px;
