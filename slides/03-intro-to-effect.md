@@ -579,3 +579,86 @@ Effect.unsafeRunAsyncWith(main, (exit) => {
   }
 })
 ```
+
+---
+layout: center
+---
+
+# Recap!
+
+we've been only scratching the surface of Effect and a lot of its power hasn't made it to this presentation but we've seen hot to deal with:
+
+<v-clicks>
+
+- Errors
+- Retries
+- Concurrency
+- Interruption
+- Logging
+- Tracing
+- Metrics
+- Dependencies
+
+</v-clicks>
+
+---
+layout: full
+---
+
+# What's in the Box?
+
+When looking into Effect you'll find a rich set of modules to deal with much more than what we've seen, just in `@effect/core` you'll find:
+
+<v-clicks>
+
+- Effect: Generic Program Definition
+- Cause: Representing potentially multiple failure causes of different kinds
+- Scope: Safe Resource Management to model things like database connections
+- Fiber: Low Level Concurrency Primitives
+- Queue: Work-Stealing Concurrent & Backpressured Queues
+- Hub: Like a Pub/Sub for Effects
+- Layer: Context Construction
+- Metrics: Prometheus Compatible Metrics
+- Tracing: OpenTelemetry Compatible Tracing
+
+</v-clicks>
+
+---
+layout: full
+---
+
+# What's in the Box?
+
+When looking into Effect you'll find a rich set of modules to deal with much more than what we've seen, just in `@effect/core` you'll find:
+
+<v-clicks>
+
+- Logger: Multi-Level & Abstract Logger
+- Ref: Keep State in Context with potentially Syncronized access and updates
+- Schedule: Time-based Scheduling Policies
+- Stream: Pull Based Effectful Streams (like an Effect that can produce 0 - infinite values)
+- Deferred: Like a Promise of an Effect that may be fulfilled at a later point
+- STM: Transactional Data Structures & Coordination 
+- Semaphore: Concurrency Control
+- Clock: System Clock & Time Utilities
+- Random: Deterministic Seeded Random Utilities
+- Runtime: Runtime Configuration and Runner
+- Supervisor: Fiber Monitoring
+
+</v-clicks>
+
+---
+layout: center
+---
+
+# Thank you!
+
+Where to go next?
+
+Check out our [Website](https://www.effect.website/) 
+
+Join our [Discord](https://discord.gg/cWtHKdAXwC) Community
+
+Follow us on [YouTube](https://www.youtube.com/channel/UC8wNHsXmEuoikbwRdLeoJQg) for [Effect Time](https://www.youtube.com/playlist?list=PLDf3uQLaK2B8kVv0PS1bwMwzENHpq48Ox)
+
+Follow us on Twitter: [Effect](https://twitter.com/effectTS_), [Me](https://twitter.com/MichaelArnaldi), [MATECHS](https://twitter.com/matechsdigital)
