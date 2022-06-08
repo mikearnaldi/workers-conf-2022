@@ -1,4 +1,5 @@
 export * as Effect from "@effect/core/io/Effect";
+export * as Metrics from "@effect/core/io/Metrics";
 export * as Exit from "@effect/core/io/Exit";
 export * as Schedule from "@effect/core/io/Schedule";
 export { pipe } from "@tsplus/stdlib/data/Function";

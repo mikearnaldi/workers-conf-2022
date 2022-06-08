@@ -337,8 +337,58 @@ export declare const getTodo: (id: number) => Effect.Effect<never, Http.FetchErr
 // ---cut---
 export const getTodos = (ids: number[]) => Effect.forEachPar(() => ids, (id) => getTodo(id));
 
-export const program = pipe(
-  getTodos([0, 1, 2, 3]),
-  Effect.withParallelism(3)
+export const program = pipe(getTodos([0, 1, 2, 3]), Effect.withParallelism(3))
+```
+
+
+---
+layout: full
+---
+
+# Metrics
+
+Defining prometheus-compatible metrics for your program becomes painless, Metrics are native to Effect and we have our own representations for them that is independent of third parties, multiple exporters will be provided as ecosystem packages.
+
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos.ts
+export * from "./examples/effect/03-todos";
+// @filename: index.ts
+// ---cut---
+import { Effect, pipe } from "./common";
+import * as Metrics from "@effect/core/io/Metrics"
+import * as Todos from "./todos";
+
+export const GetTodoCount = Metrics.counter("GetTodoCount")
+
+export const getTodo = (id: number) => pipe(
+  Todos.getTodo(id),
+  Effect.tap(() => Metrics.increment(GetTodoCount))
 )
+```
+
+Or by making increment part of the metric definition:
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos.ts
+export * from "./examples/effect/03-todos";
+// @filename: index.ts
+import { Effect, pipe } from "./common";
+import * as Metrics from "@effect/core/io/Metrics"
+import * as Todos from "./todos";
+
+// ---cut---
+export const GetTodoCount = pipe(Metrics.counter("GetTodoCount"), Metrics.fromConst(() => 1))
+
+export const getTodo = (id: number) => GetTodoCount(Todos.getTodo(id))
 ```

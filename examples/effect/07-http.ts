@@ -1,5 +1,6 @@
 import * as Effect from "@effect/core/io/Effect";
 import * as Layer from "@effect/core/io/Layer";
+import * as Metrics from "@effect/core/io/Metrics";
 import * as Schedule from "@effect/core/io/Schedule";
 import * as Duration from "@tsplus/stdlib/data/Duration";
 import * as Either from "@tsplus/stdlib/data/Either";
@@ -16,19 +17,27 @@ export class JsonBodyError {
   constructor(readonly error: unknown) {}
 }
 
+export const HttpRequestCount = pipe(
+  Metrics.counter("HttpRequest"),
+  Metrics.fromConst(() => 1)
+)
+
 export const makeHttpService = () => {
   const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
-    Effect.asyncInterrupt<never, FetchError, Response>((resume) => {
-      const controller = new AbortController();
-      fetch(input, { ...(init ?? {}), signal: controller.signal }).then((response) => {
-        resume(Effect.succeed(() => response));
-      }).catch((error) => {
-        resume(Effect.fail(() => new FetchError(error)));
-      });
-      return Either.left(Effect.succeed(() => {
-        controller.abort();
-      }));
-    });
+    pipe(
+      Effect.asyncInterrupt<never, FetchError, Response>((resume) => {
+        const controller = new AbortController();
+        fetch(input, { ...(init ?? {}), signal: controller.signal }).then((response) => {
+          resume(Effect.succeed(() => response));
+        }).catch((error) => {
+          resume(Effect.fail(() => new FetchError(error)));
+        });
+        return Either.left(Effect.succeed(() => {
+          controller.abort();
+        }));
+      }),
+      HttpRequestCount
+    );
   const jsonBody = (input: Response) =>
     Effect.tryCatchPromise(
       (): Promise<unknown> => input.json(),
