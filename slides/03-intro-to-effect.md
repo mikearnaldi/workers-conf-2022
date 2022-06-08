@@ -520,3 +520,62 @@ Effect.unsafeRunAsyncWith(main, (exit) => {
   }
 })
 ```
+
+---
+layout: full
+---
+
+# Dependency Injection
+
+Layers represents modules of your application and they compose very well, you could imagine having a service `TodoRepo` which constructors depends on `Http` and we have a program that uses both `TodoRepo | Http`
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos-impl.ts
+export * from "./examples/effect/09-todos-orDie";
+// @filename: todos.ts
+import { Effect, Chunk, Exit, Http as HttpImpl, pipe } from "./common";
+import { Tag } from "@tsplus/stdlib/service/Tag";
+
+export interface TodoRepo {
+  readonly getTodo: (id: number) => Effect.Effect<never, never, unknown>
+  readonly getTodos: (ids: number[]) => Effect.Effect<never, never, Chunk.Chunk<unknown>>
+}
+
+export const TodoRepo = Tag<TodoRepo>()
+
+export interface Http {
+  readonly request: typeof HttpImpl.request
+}
+
+export const Http = Tag<Http>()
+
+// ---cut---
+
+import * as Layer from "@effect/core/io/Layer"
+
+export declare const LiveHttp: Layer.Layer<never, never, Http>
+export declare const LiveTodoRepo: Layer.Layer<Http, never, TodoRepo>
+
+export const AppContext = pipe(
+  LiveHttp,
+  Layer.andTo(LiveTodoRepo)
+)
+
+export declare const program: Effect.Effect<Http | TodoRepo, never, void>
+
+export const main = pipe(
+  program,
+  Effect.provideSomeLayer(AppContext)
+)
+
+Effect.unsafeRunAsyncWith(main, (exit) => {
+  if (Exit.isFailure(exit)) {
+    console.error(`Unexpected failure: ${JSON.stringify(exit.cause)}`)
+  }
+})
+```

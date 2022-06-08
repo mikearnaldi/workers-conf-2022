@@ -11,19 +11,23 @@ Building a small application that fetches a list of `TODOs` from the [{JSON} Pla
 // ---cut---
 const getTodo = async (id: number): Promise<unknown> => {
   const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);
+  
   return await res.json();
 };
 
 const getTodos = async (ids: number[]) => {
   const todos: unknown[] = [];
+
   for (const id of ids) {
     todos.push(await getTodo(id));
   }
+
   return todos;
 };
 
 const main = async () => {
   const todos = await getTodos([1, 2, 3, 4, 5]);
+
   for (const todo of todos) {
     console.log(`Got a todo: ${JSON.stringify(todo)}`);
   }
