@@ -634,7 +634,7 @@ When looking into Effect you'll find a rich set of modules to deal with much mor
 <v-clicks>
 
 - Logger: Multi-Level & Abstract Logger
-- Ref: Keep State in Context with potentially Syncronized access and updates
+- Ref: Mutable Reference to immutable State with potentially Syncronized access and updates
 - Schedule: Time-based Scheduling Policies
 - Stream: Pull Based Effectful Streams (like an Effect that can produce 0 - infinite values)
 - Deferred: Like a Promise of an Effect that may be fulfilled at a later point
