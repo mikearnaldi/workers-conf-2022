@@ -586,7 +586,7 @@ layout: center
 
 # Recap!
 
-we've been only scratching the surface of Effect and a lot of its power hasn't made it to this presentation but we've seen hot to deal with:
+we've been only scratching the surface of Effect and a lot of its power hasn't made it to this presentation but we've seen how to deal with:
 
 <v-clicks>
 
