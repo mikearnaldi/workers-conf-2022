@@ -22,7 +22,7 @@ export class FetchError {
   constructor(readonly error: unknown) {}
 }
 
-export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
+export const request = (input: RequestInfo, init?: RequestInit | undefined) =>
   Effect.tryCatchPromise(
     () => fetch(input, init),
     (error) => new FetchError(error)
@@ -129,7 +129,7 @@ export * from "./examples/effect/03-lib";
 export * from "./examples/effect/03-todos";
 // @filename: index.ts
 // ---cut---
-import { Schedule, Effect, Http, Exit, pipe } from "./common";
+import { Effect, Exit, pipe } from "./common";
 import * as Todos from "./todos";
 
 export const program = Effect.struct({
@@ -255,7 +255,7 @@ export class FetchError {
 import * as Effect from "@effect/core/io/Effect";
 import * as Either from "@tsplus/stdlib/data/Either";
 
-export const request = (input: RequestInfo | URL, init?: RequestInit | undefined) =>
+export const request = (input: RequestInfo, init?: RequestInit | undefined) =>
   Effect.asyncInterrupt<never, FetchError, Response>((resume) => {
     const controller = new AbortController();
     fetch(input, { ...(init ?? {}), signal: controller.signal }).then((response) => {
@@ -349,7 +349,6 @@ layout: full
 
 Defining prometheus-compatible metrics for your program becomes painless, Metrics are native to Effect and we have our own representations for them that is independent of third parties, multiple exporters will be provided as ecosystem packages.
 
-
 ```ts twoslash
 // @module: esnext
 // @filename: common.ts
@@ -391,4 +390,133 @@ import * as Todos from "./todos";
 export const GetTodoCount = pipe(Metrics.counter("GetTodoCount"), Metrics.fromConst(() => 1))
 
 export const getTodo = (id: number) => GetTodoCount(Todos.getTodo(id))
+```
+
+---
+layout: full
+---
+
+# Tracing
+
+We are currently integrating with OpenTelemetry via the ecosystem package `@effect/otel` but we are working on a native representation of spans and tracing following the same principles applied for `Metrics`
+
+```ts
+import { Effect, pipe } from "./common";
+import * as Todos from "./todos";
+
+export const getTodo = (id: number) => pipe(
+  Todos.getTodo(id),
+  Effect.withSpanAttribute("id", id),
+  Effect.withSpan("GetTodo")
+)
+
+export const getTodos = (ids: number[]) => pipe(
+  Todos.getTodos(ids),
+  Effect.withSpanAttribute("ids", id),
+  Effect.withSpan("GetTodos")
+)
+```
+
+Note: This isn't yet ready but we are actively working on it! for the time being you'll find `withSpan` in the otel ecosystem package.
+
+---
+layout: full
+---
+
+# Dependency Injection
+
+Effect has native support for Context propagation, think of it like the React context on type-safe steroids.
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos.ts
+// ---cut---
+import { Effect, Chunk } from "./common";
+import { Tag } from "@tsplus/stdlib/service/Tag";
+
+export interface TodoRepo {
+  readonly getTodo: (id: number) => Effect.Effect<never, never, unknown>
+  readonly getTodos: (ids: number[]) => Effect.Effect<never, never, Chunk.Chunk<unknown>>
+}
+
+export const TodoRepo = Tag<TodoRepo>()
+
+export const program = Effect.gen(function* ($) {
+  const Todos = yield* $(TodoRepo)
+
+  const todos = yield* $(Todos.getTodos([1, 2, 3, 4]))
+
+  for (const todo of todos) {
+    yield* $(Effect.log(() => `todo: ${JSON.stringify(todo)}`))
+  }
+  
+  return Chunk.size(todos)
+})
+```
+
+---
+layout: full
+---
+
+# Dependency Injection
+
+Running a program requires all dependencies to be provided into the Context, a smart way of constructing dependency trees of potentially interdependent services is by using `Layer`
+
+```ts twoslash
+// @module: esnext
+// @filename: common.ts
+/// <reference path="node_modules/@types/node/index.d.ts" />
+/// <reference path="node_modules/@effect/core/index.d.ts" />
+export * from "./examples/effect/03-lib";
+// @filename: todos-impl.ts
+export * from "./examples/effect/09-todos-orDie";
+// @filename: todos.ts
+import { Effect, Chunk, Exit, pipe } from "./common";
+import { Tag } from "@tsplus/stdlib/service/Tag";
+
+export interface TodoRepo {
+  readonly getTodo: (id: number) => Effect.Effect<never, never, unknown>
+  readonly getTodos: (ids: number[]) => Effect.Effect<never, never, Chunk.Chunk<unknown>>
+}
+
+export const TodoRepo = Tag<TodoRepo>()
+
+export const program = Effect.gen(function* ($) {
+  const Todos = yield* $(TodoRepo)
+
+  const todos = yield* $(Todos.getTodos([1, 2, 3, 4]))
+
+  for (const todo of todos) {
+    yield* $(Effect.log(() => `todo: ${JSON.stringify(todo)}`))
+  }
+
+  return Chunk.size(todos)
+})
+
+// ---cut---
+
+import * as Layer from "@effect/core/io/Layer"
+import * as Impl from "./todos-impl";
+
+export const LiveTodoRepo = Layer.fromEffect(TodoRepo, () => 
+  Effect.succeed(() => ({
+    getTodo: Impl.getTodo,
+    getTodos: Impl.getTodos
+  }))
+)
+
+export const main = pipe(
+  program,
+  Effect.provideSomeLayer(LiveTodoRepo)
+)
+
+Effect.unsafeRunAsyncWith(main, (exit) => {
+  if (Exit.isFailure(exit)) {
+    console.error(`Unexpected failure: ${JSON.stringify(exit.cause)}`)
+  }
+})
 ```
