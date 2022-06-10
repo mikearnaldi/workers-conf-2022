@@ -648,6 +648,22 @@ When looking into Effect you'll find a rich set of modules to deal with much mor
 </v-clicks>
 
 ---
+layout: full
+---
+
+<style>
+  img {
+    max-width: 50% !important;
+  }
+</style>
+
+# Early adopters feedback
+
+<br />
+
+![Imgur](https://i.imgur.com/ZUKacox.png)
+
+---
 layout: center
 ---
 
